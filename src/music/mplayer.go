@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ygdcz/golang-project/src/music/library"
-	"github.com/ygdcz/golang-project/src/music/mp"
+	"github.com/ygdcz/golang-learning/src/music/library"
+	"github.com/ygdcz/golang-learning/src/music/mp"
 )
 
 var lib *library.MusicManager

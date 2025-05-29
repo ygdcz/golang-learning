@@ -5,8 +5,8 @@ import "testing"
 type EchoServer struct {
 }
 
-func (server *EchoServer) Handle(method, params string) Response {
-	return Response{"200", "hello from echo server"}
+func (server *EchoServer) Handle(method, params string) *Response {
+	return &Response{"200", "hello from echo server"}
 }
 
 func (server *EchoServer) Name() string {

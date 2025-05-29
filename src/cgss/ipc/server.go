@@ -17,7 +17,7 @@ type Response struct {
 
 type Server interface {
 	Name() string
-	Handle(method, params string) Response
+	Handle(method, params string) *Response
 }
 
 type IpcServer struct {

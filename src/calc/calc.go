@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ygdcz/golang-project/src/simplemath"
+	"github.com/ygdcz/golang-learning/src/simplemath"
 )
 
 var Usage = func() {

@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ygdcz/golang-project/src/sorter/algorithms/bubblesort"
-	"github.com/ygdcz/golang-project/src/sorter/algorithms/qsort"
+	"github.com/ygdcz/golang-learning/src/sorter/algorithms/bubblesort"
+	"github.com/ygdcz/golang-learning/src/sorter/algorithms/qsort"
 )
 
 var infile *string = flag.String("i", "infile", "File contains values for sorting")
