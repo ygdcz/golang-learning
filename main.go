@@ -182,6 +182,16 @@ func sendSignals(infos []ProcessInfo, sig syscall.Signal) (succeeded, failed int
 	return succeeded, failed
 }
 
+func confirmSend() bool {
+	fmt.Print("[dry-run] Type 'yes' to confirm: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		return false
+	}
+	response := strings.TrimSpace(scanner.Text())
+	return strings.ToLower(response) == "yes"
+}
+
 func main() {
 	// CLI entrypoint - to be implemented in Task 6
 	_ = bufio.NewScanner(os.Stdin)
