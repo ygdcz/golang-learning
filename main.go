@@ -57,7 +57,7 @@ func getProcessInfos(lines []string) ([]ProcessInfo, error) {
 
 func runCmds(cmds []*exec.Cmd) ([]string, error) {
 	if len(cmds) == 0 {
-		return nil, errors.New("The cmd slice is invalid!")
+		return nil, errors.New("cmd slice is empty")
 	}
 	first := true
 	var output []byte
