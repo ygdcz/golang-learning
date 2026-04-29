@@ -55,6 +55,34 @@ func getProcessInfos(lines []string) ([]ProcessInfo, error) {
 	return infos, nil
 }
 
+// buildSearchCmds constructs the command pipeline to find processes
+// Pipeline: ps aux | grep keyword | grep -v grep | awk '{print $2, $13}'
+func buildSearchCmds(keyword string) []*exec.Cmd {
+	return []*exec.Cmd{
+		exec.Command("ps", "aux"),
+		exec.Command("grep", keyword),
+		exec.Command("grep", "-v", "grep"),
+		exec.Command("awk", "{print $2, $13}"),
+	}
+}
+
+// findProcesses searches for processes matching keyword
+// Returns ProcessInfo list or error
+func findProcesses(keyword string) ([]ProcessInfo, error) {
+	cmds := buildSearchCmds(keyword)
+	lines, err := runCmds(cmds)
+	if err != nil {
+		return nil, fmt.Errorf("command execution failed: %w", err)
+	}
+
+	infos, err := getProcessInfos(lines)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse process info: %w", err)
+	}
+
+	return infos, nil
+}
+
 func runCmds(cmds []*exec.Cmd) ([]string, error) {
 	if len(cmds) == 0 {
 		return nil, errors.New("cmd slice is empty")
