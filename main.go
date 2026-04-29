@@ -57,12 +57,12 @@ func getProcessInfos(lines []string) ([]ProcessInfo, error) {
 }
 
 // buildSearchCmds constructs the command pipeline to find processes
-// Pipeline: ps -eo pid,comm | grep -F -- keyword | awk '{print $1, $2}'
+// Pipeline: ps -eo pid,args | grep -F -- keyword
+// Uses 'args' to match full command line (supports keywords with spaces)
 func buildSearchCmds(keyword string) []*exec.Cmd {
 	return []*exec.Cmd{
-		exec.Command("ps", "-eo", "pid,comm"),
+		exec.Command("ps", "-eo", "pid,args"),
 		exec.Command("grep", "-F", "--", keyword),
-		exec.Command("awk", "{print $1, $2}"),
 	}
 }
 
@@ -192,6 +192,59 @@ func sendSignals(infos []ProcessInfo, sig syscall.Signal) (succeeded, failed int
 	return succeeded, failed
 }
 
+func chooseTargets(infos []ProcessInfo) ([]ProcessInfo, bool) {
+	if len(infos) == 1 {
+		return infos, true
+	}
+
+	fmt.Println("Matched processes:")
+	for i, info := range infos {
+		fmt.Printf("  [%d] PID=%d COMMAND=%s\n", i+1, info.PID, info.Command)
+	}
+	fmt.Println("Select targets: comma-separated indexes (e.g. 1,3) or 'all'")
+	fmt.Print("Your choice: ")
+
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
+		}
+		return nil, false
+	}
+
+	input := strings.TrimSpace(strings.ToLower(scanner.Text()))
+	if input == "all" {
+		return infos, true
+	}
+
+	parts := strings.Split(input, ",")
+	seen := make(map[int]bool)
+	selected := make([]ProcessInfo, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		idx, err := strconv.Atoi(part)
+		if err != nil || idx < 1 || idx > len(infos) {
+			fmt.Fprintf(os.Stderr, "Invalid selection: %s\n", part)
+			return nil, false
+		}
+		if seen[idx] {
+			continue
+		}
+		seen[idx] = true
+		selected = append(selected, infos[idx-1])
+	}
+
+	if len(selected) == 0 {
+		fmt.Fprintln(os.Stderr, "No targets selected")
+		return nil, false
+	}
+
+	return selected, true
+}
+
 func confirmSend() bool {
 	fmt.Print("[dry-run] Type 'yes' to confirm: ")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -234,9 +287,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Println("Matched processes:")
-	for _, info := range infos {
-		fmt.Printf("  PID=%d COMMAND=%s\n", info.PID, info.Command)
+	targets, ok := chooseTargets(infos)
+	if !ok {
+		fmt.Println("Aborted")
+		os.Exit(0)
 	}
 
 	fmt.Printf("Signal to send: %s\n", sig.String())
@@ -248,8 +302,8 @@ func main() {
 		}
 	}
 
-	succeeded, failed := sendSignals(infos, sig)
-	fmt.Printf("Summary: total=%d succeeded=%d failed=%d\n", len(infos), succeeded, failed)
+	succeeded, failed := sendSignals(targets, sig)
+	fmt.Printf("Summary: total=%d succeeded=%d failed=%d\n", len(targets), succeeded, failed)
 
 	if failed > 0 {
 		os.Exit(1)
