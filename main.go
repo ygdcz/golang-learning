@@ -56,12 +56,11 @@ func getProcessInfos(lines []string) ([]ProcessInfo, error) {
 }
 
 // buildSearchCmds constructs the command pipeline to find processes
-// Pipeline: ps -eo pid,comm | grep keyword | grep -v grep | awk '{print $1, $2}'
+// Pipeline: ps -eo pid,comm | grep -F -- keyword | awk '{print $1, $2}'
 func buildSearchCmds(keyword string) []*exec.Cmd {
 	return []*exec.Cmd{
 		exec.Command("ps", "-eo", "pid,comm"),
-		exec.Command("grep", keyword),
-		exec.Command("grep", "-v", "grep"),
+		exec.Command("grep", "-F", "--", keyword),
 		exec.Command("awk", "{print $1, $2}"),
 	}
 }
