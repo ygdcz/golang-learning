@@ -80,7 +80,16 @@ func findProcesses(keyword string) ([]ProcessInfo, error) {
 		return nil, fmt.Errorf("failed to parse process info: %w", err)
 	}
 
-	return infos, nil
+	// Filter out current process to prevent self-termination
+	currentPID := os.Getpid()
+	var filtered []ProcessInfo
+	for _, info := range infos {
+		if info.PID != currentPID {
+			filtered = append(filtered, info)
+		}
+	}
+
+	return filtered, nil
 }
 
 func runCmds(cmds []*exec.Cmd) ([]string, error) {
