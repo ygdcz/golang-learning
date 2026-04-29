@@ -186,6 +186,9 @@ func confirmSend() bool {
 	fmt.Print("[dry-run] Type 'yes' to confirm: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
+		}
 		return false
 	}
 	response := strings.TrimSpace(scanner.Text())
