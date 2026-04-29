@@ -156,6 +156,17 @@ func getError(err error, cmd *exec.Cmd, extraInfo ...string) error {
 	return errors.New(errMsg)
 }
 
+func parseSignal(sigName string) (syscall.Signal, error) {
+	switch strings.ToLower(sigName) {
+	case "term":
+		return syscall.SIGTERM, nil
+	case "quit":
+		return syscall.SIGQUIT, nil
+	default:
+		return 0, fmt.Errorf("invalid signal '%s': must be 'term' or 'quit'", sigName)
+	}
+}
+
 func main() {
 	// CLI entrypoint - to be implemented in Task 6
 	_ = bufio.NewScanner(os.Stdin)
