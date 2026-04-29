@@ -167,6 +167,21 @@ func parseSignal(sigName string) (syscall.Signal, error) {
 	}
 }
 
+func sendSignals(infos []ProcessInfo, sig syscall.Signal) (succeeded, failed int) {
+	sigName := sig.String()
+	for _, info := range infos {
+		err := syscall.Kill(info.PID, sig)
+		if err != nil {
+			fmt.Printf("✗ Failed to send %s to PID %d: %v\n", sigName, info.PID, err)
+			failed++
+		} else {
+			fmt.Printf("✓ Sent %s to PID %d\n", sigName, info.PID)
+			succeeded++
+		}
+	}
+	return succeeded, failed
+}
+
 func main() {
 	// CLI entrypoint - to be implemented in Task 6
 	_ = bufio.NewScanner(os.Stdin)
