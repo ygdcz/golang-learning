@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -196,7 +197,52 @@ func confirmSend() bool {
 }
 
 func main() {
-	// CLI entrypoint - to be implemented in Task 6
-	_ = bufio.NewScanner(os.Stdin)
-	_ = syscall.SIGTERM
+	keyword := flag.String("keyword", "", "Process keyword to match (required)")
+	signalName := flag.String("signal", "term", "Signal to send: term or quit")
+	dryRun := flag.Bool("dry-run", true, "Dry run mode (ask for confirmation before sending)")
+	flag.Parse()
+
+	if strings.TrimSpace(*keyword) == "" {
+		fmt.Fprintln(os.Stderr, "Error: -keyword is required")
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	sig, err := parseSignal(*signalName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	infos, err := findProcesses(*keyword)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(infos) == 0 {
+		fmt.Printf("No processes matched keyword: %s\n", *keyword)
+		os.Exit(0)
+	}
+
+	fmt.Println("Matched processes:")
+	for _, info := range infos {
+		fmt.Printf("  PID=%d COMMAND=%s\n", info.PID, info.Command)
+	}
+
+	fmt.Printf("Signal to send: %s\n", sig.String())
+
+	if *dryRun {
+		if !confirmSend() {
+			fmt.Println("Aborted")
+			os.Exit(0)
+		}
+	}
+
+	succeeded, failed := sendSignals(infos, sig)
+	fmt.Printf("Summary: total=%d succeeded=%d failed=%d\n", len(infos), succeeded, failed)
+
+	if failed > 0 {
+		os.Exit(1)
+	}
 }
