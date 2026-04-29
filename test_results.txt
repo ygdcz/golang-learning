@@ -1,0 +1,41 @@
+Manual CLI Testing Results
+==========================
+
+Test 1: Missing keyword flag
+Command: go run main.go
+Expected: Exit 1 with error message
+Result: PASS - Error displayed: "Error: -keyword is required"
+
+Test 2: Invalid signal value
+Command: go run main.go -keyword=test -signal=kill
+Expected: Exit 1 with invalid signal error
+Result: PASS - Error displayed: "invalid signal 'kill': must be 'term' or 'quit'"
+
+Test 3: Nonexistent keyword
+Command: go run main.go -keyword=nonexistent12345
+Expected: Exit 0 with no matches message
+Result: PASS - Message displayed: "No processes matched keyword: nonexistent12345"
+
+Test 4: Dry-run confirmation abort
+Command: printf 'no\n' | go run main.go -keyword=go
+Expected: Exit 0 with "Aborted" message
+Result: PASS - Found matching processes, prompted for confirmation, aborted on non-yes input
+
+Test 5: SIGTERM signal sending
+Command: printf 'yes\n' | go run main.go -keyword=sleep -dry-run=false
+Expected: Target sleep process (PID 43875) terminated
+Result: PASS - Signal sent successfully, process terminated
+
+Test 6: SIGQUIT signal sending
+Command: printf 'yes\n' | go run main.go -keyword=sleep -signal=quit -dry-run=false
+Expected: Target sleep process (PID 44239) terminated
+Result: PASS - Signal sent successfully, process terminated
+
+Summary
+-------
+All 6 test cases passed successfully.
+- Flag parsing and validation working correctly
+- Error handling for missing/invalid inputs working correctly
+- Dry-run confirmation flow working correctly
+- Signal sending (SIGTERM and SIGQUIT) working correctly
+- Process targeting and termination working correctly
