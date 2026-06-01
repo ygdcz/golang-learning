@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	appagent "github.com/ygdcz/golang-learning/agent/agent"
 	adkagent "google.golang.org/adk/agent"
+	"google.golang.org/adk/artifact"
 	"google.golang.org/adk/cmd/launcher"
 	"google.golang.org/adk/cmd/launcher/full"
 )
@@ -26,7 +27,8 @@ func main() {
 
 	// run agent
 	config := &launcher.Config{
-		AgentLoader: adkagent.NewSingleLoader(rootAgent),
+		AgentLoader:     adkagent.NewSingleLoader(rootAgent),
+		ArtifactService: artifact.InMemoryService(),
 	}
 	l := full.NewLauncher()
 	if err = l.Execute(ctx, config, os.Args[1:]); err != nil {

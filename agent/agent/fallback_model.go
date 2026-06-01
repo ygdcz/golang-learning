@@ -35,6 +35,18 @@ func (m *fallbackModel) Name() string {
 	return m.name
 }
 
+func (m *fallbackModel) GetGoogleLLMVariant() genai.Backend {
+	if m == nil {
+		return genai.BackendUnspecified
+	}
+	for _, llm := range m.models {
+		if googleLLM, ok := llm.(interface{ GetGoogleLLMVariant() genai.Backend }); ok {
+			return googleLLM.GetGoogleLLMVariant()
+		}
+	}
+	return genai.BackendUnspecified
+}
+
 func (m *fallbackModel) GenerateContent(ctx context.Context, req *model.LLMRequest, stream bool) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
 		var lastErr error
@@ -120,7 +132,22 @@ func shouldFallbackToNextModel(err error) bool {
 	}
 
 	message := strings.ToLower(err.Error())
-	needles := []string{
+
+	neverRetry := []string{
+		"displayname",
+		"enterprise agent platform",
+		"invalid_argument",
+		"status: invalid_argument",
+		"malformed",
+		"unsupported",
+	}
+	for _, needle := range neverRetry {
+		if strings.Contains(message, needle) {
+			return false
+		}
+	}
+
+	retryNeedles := []string{
 		"resource_exhausted",
 		"quota exceeded",
 		"rate limit",
@@ -138,7 +165,7 @@ func shouldFallbackToNextModel(err error) bool {
 		"503",
 		"504",
 	}
-	for _, needle := range needles {
+	for _, needle := range retryNeedles {
 		if strings.Contains(message, needle) {
 			return true
 		}
